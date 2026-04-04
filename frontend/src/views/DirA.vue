@@ -1,6 +1,6 @@
 <template>
   <div class="dir-page">
-    <h1 class="page-title">目录A - 上传文件</h1>
+    <h1 class="page-title">INPUT目录 - 上传文件</h1>
     
     <el-card>
       <template #header>

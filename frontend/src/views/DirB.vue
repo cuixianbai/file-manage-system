@@ -1,6 +1,6 @@
 <template>
   <div class="dir-page">
-    <h1 class="page-title">目录B - 处理后文件</h1>
+    <h1 class="page-title">OUTPUT目录 - 处理后文件</h1>
     
     <el-card>
       <template #header>

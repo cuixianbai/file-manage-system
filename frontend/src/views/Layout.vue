@@ -36,12 +36,12 @@
           
           <el-menu-item index="/dirA">
             <el-icon><Folder /></el-icon>
-            <span>目录A</span>
+            <span>INPUT目录</span>
           </el-menu-item>
           
           <el-menu-item index="/dirB">
             <el-icon><FolderOpened /></el-icon>
-            <span>目录B</span>
+            <span>OUTPUT目录</span>
           </el-menu-item>
           
           <el-menu-item v-if="authStore.isAdmin" index="/users">

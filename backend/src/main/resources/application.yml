@@ -1,0 +1,62 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: file-manage-system
+
+  # H2 Database Configuration
+  datasource:
+    url: jdbc:h2:file:./data/filemanage_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  # H2 Console (开发调试用)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # Mail Configuration (QQ邮箱SMTP)
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: cuixianbai@qq.com
+    password: hgenfobfpritbfhi
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            enable: true
+
+# File Storage Configuration
+file:
+  storage:
+    dir-a: ./storage/dirA
+    dir-b: ./storage/dirB
+
+# JWT Configuration
+jwt:
+  secret: your-256-bit-secret-key-for-jwt-signing-must-be-at-least-32-characters-long
+  expiration: 86400000
+
+# Logging
+logging:
+  level:
+    com.filemanage: DEBUG
+    org.springframework.security: DEBUG

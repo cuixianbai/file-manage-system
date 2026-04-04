@@ -1,0 +1,79 @@
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build files
+target/
+dist/
+
+# Dependency directories
+node_modules/
+
+# Log files
+logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Database files
+*.db
+*.h2.db
+
+# Storage directories
+storage/
+data/
+
+# IDE specific files
+.project
+.classpath
+.settings/
+
+# Maven files
+.mvn/
+
+# Gradle files
+.gradle/
+gradle-wrapper.jar
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+
+# IDE generated files
+*.iml
+*.ipr
+*.iws
+
+# Coverage files
+coverage/
+*.lcov
+
+# Test output
+/test-results/
+
+# Local development files
+local/
+
+# Build outputs
+build/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

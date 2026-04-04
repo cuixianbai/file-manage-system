@@ -49,7 +49,7 @@
           <div class="stat-content">
             <p class="stat-desc">查看公司文件目录</p>
             <el-button type="warning" @click="$router.push('/dirA')">
-              查看目录A
+              查看INPUT目录
             </el-button>
           </div>
         </el-card>
@@ -67,10 +67,10 @@
         <el-descriptions-item label="上传记录">
           查看文件上传历史记录
         </el-descriptions-item>
-        <el-descriptions-item label="目录A">
+        <el-descriptions-item label="INPUT目录">
           查看上传文件存储目录
         </el-descriptions-item>
-        <el-descriptions-item label="目录B">
+        <el-descriptions-item label="OUTPUT目录">
           查看外部程序处理后的PDF/JPG文件
         </el-descriptions-item>
         <el-descriptions-item v-if="authStore.isAdmin" label="用户管理">

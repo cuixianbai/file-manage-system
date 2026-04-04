@@ -24,12 +24,7 @@
         ref="uploadRef"
         class="upload-area"
         drag
-        :action="uploadUrl"
-        :headers="headers"
-        :data="uploadData"
         :auto-upload="false"
-        :on-success="handleSuccess"
-        :on-error="handleError"
         :on-change="handleChange"
         :file-list="fileList"
         accept="*"
@@ -118,8 +113,12 @@ const handleUpload = async () => {
   uploading.value = true
   
   try {
+    console.log('开始上传文件...')
     const file = fileList.value[0].raw
+    console.log('文件信息:', file.name, file.size)
+    
     const response = await fileApi.upload(file, form.companyId)
+    console.log('上传响应:', response)
     
     if (response.data.success) {
       ElMessage.success(response.data.message)
@@ -128,8 +127,10 @@ const handleUpload = async () => {
       ElMessage.error(response.data.message)
     }
   } catch (error) {
+    console.error('上传错误:', error)
     ElMessage.error(error.response?.data?.message || '上传失败')
   } finally {
+    console.log('上传完成，重置loading状态')
     uploading.value = false
   }
 }

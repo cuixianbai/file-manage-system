@@ -31,7 +31,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="380" fixed="right">
           <template #default="{ row }">
             <el-button 
               :type="row.status === 'ENABLED' ? 'danger' : 'success'"
@@ -46,6 +46,13 @@
               @click="resetPassword(row)"
             >
               重置密码
+            </el-button>
+            <el-button 
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+            >
+              删除
             </el-button>
           </template>
         </el-table-column>
@@ -84,6 +91,29 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- Delete User Dialog -->
+    <el-dialog
+      v-model="deleteDialogVisible"
+      title="删除用户"
+      width="400px"
+    >
+      <p>确定要删除用户 "{{ selectedUser?.username }}" 吗？</p>
+      <p v-if="selectedUser?.role === 'ADMIN' && selectedUser?.username === 'admin'" style="color: #f56c6c;">
+        不能删除默认管理员账号！
+      </p>
+      <template #footer>
+        <el-button @click="deleteDialogVisible = false">取消</el-button>
+        <el-button 
+          type="danger" 
+          @click="confirmDelete" 
+          :loading="actionLoading"
+          :disabled="selectedUser?.role === 'ADMIN' && selectedUser?.username === 'admin'"
+        >
+          删除
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -98,6 +128,7 @@ const loading = ref(false)
 const actionLoading = ref(false)
 const statusDialogVisible = ref(false)
 const passwordDialogVisible = ref(false)
+const deleteDialogVisible = ref(false)
 const selectedUser = ref(null)
 const sendEmail = ref(false)
 
@@ -159,6 +190,27 @@ const confirmResetPassword = async () => {
     passwordDialogVisible.value = false
   } catch (error) {
     ElMessage.error(error.response?.data?.message || '操作失败')
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+const handleDelete = (user) => {
+  selectedUser.value = user
+  deleteDialogVisible.value = true
+}
+
+const confirmDelete = async () => {
+  if (!selectedUser.value) return
+  
+  actionLoading.value = true
+  try {
+    const response = await userApi.delete(selectedUser.value.id)
+    ElMessage.success(response.data.message)
+    deleteDialogVisible.value = false
+    loadUsers()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '删除失败')
   } finally {
     actionLoading.value = false
   }

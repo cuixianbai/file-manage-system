@@ -20,6 +20,17 @@
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-button 
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
     
@@ -41,6 +52,29 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- Delete Company Dialog -->
+    <el-dialog
+      v-model="deleteDialogVisible"
+      title="删除公司"
+      width="400px"
+    >
+      <p>确定要删除公司 "{{ selectedCompany?.name }}" 吗？</p>
+      <p v-if="selectedCompany && selectedCompany.users && selectedCompany.users.length > 0" style="color: #f56c6c;">
+        该公司下还有 {{ selectedCompany.users.length }} 个用户，无法删除！
+      </p>
+      <template #footer>
+        <el-button @click="deleteDialogVisible = false">取消</el-button>
+        <el-button 
+          type="danger" 
+          @click="confirmDelete" 
+          :loading="actionLoading"
+          :disabled="selectedCompany && selectedCompany.users && selectedCompany.users.length > 0"
+        >
+          删除
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -54,6 +88,8 @@ const companies = ref([])
 const loading = ref(false)
 const actionLoading = ref(false)
 const createDialogVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const selectedCompany = ref(null)
 const formRef = ref(null)
 const form = reactive({
   name: ''
@@ -104,6 +140,27 @@ const handleCreate = async () => {
       }
     }
   })
+}
+
+const handleDelete = (company) => {
+  selectedCompany.value = company
+  deleteDialogVisible.value = true
+}
+
+const confirmDelete = async () => {
+  if (!selectedCompany.value) return
+  
+  actionLoading.value = true
+  try {
+    const response = await companyApi.delete(selectedCompany.value.id)
+    ElMessage.success(response.data.message)
+    deleteDialogVisible.value = false
+    loadCompanies()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '删除失败')
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 const formatDate = (dateStr) => {

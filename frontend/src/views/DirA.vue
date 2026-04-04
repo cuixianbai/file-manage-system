@@ -12,31 +12,15 @@
         </div>
       </template>
       
-      <div v-if="authStore.isAdmin" class="admin-view">
-        <el-collapse v-model="activeCompanies">
-          <el-collapse-item
-            v-for="company in companies"
-            :key="company"
-            :title="company"
-            :name="company"
-          >
-            <el-empty v-if="!files[company] || files[company].length === 0" description="暂无文件" />
-            <el-list v-else>
-              <el-list-item v-for="file in files[company]" :key="file">
-                <el-icon><Document /></el-icon>
-                <span class="file-name">{{ file }}</span>
-              </el-list-item>
-            </el-list>
-          </el-collapse-item>
-        </el-collapse>
-      </div>
-      
-      <div v-else class="user-view">
+      <div class="file-list">
         <el-empty v-if="files.length === 0" description="暂无文件" />
-        <el-list v-else>
-          <el-list-item v-for="file in files" :key="file">
-            <el-icon><Document /></el-icon>
-            <span class="file-name">{{ file }}</span>
+        <el-list v-else style="width: 100%">
+          <el-list-item v-for="file in files" :key="file.fileName" style="display: block; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; width: 100%;">
+              <el-icon style="margin-right: 10px;"><Document /></el-icon>
+              <span class="file-name" style="flex: 1;">{{ file.fileName }}</span>
+              <span class="file-time" style="color: #909399; font-size: 14px;">{{ formatTime(file.lastModified) }}</span>
+            </div>
           </el-list-item>
         </el-list>
       </div>
@@ -53,8 +37,6 @@ import { fileApi } from '../api'
 
 const authStore = useAuthStore()
 const files = ref([])
-const companies = ref([])
-const activeCompanies = ref([])
 const loading = ref(false)
 
 onMounted(() => {
@@ -65,26 +47,30 @@ const loadFiles = async () => {
   loading.value = true
   try {
     const response = await fileApi.getDirAFiles()
-    
-    if (authStore.isAdmin) {
-      // Admin sees all companies
-      companies.value = response.data
-      activeCompanies.value = response.data
-      
-      // Load files for each company
-      for (const company of response.data) {
-        // This is simplified - in real scenario, you'd have an API to get files per company
-        files.value[company] = []
-      }
-    } else {
-      // User sees only their company files
-      files.value = response.data
-    }
+    files.value = response.data
   } catch (error) {
-    ElMessage.error('获取文件列表失败')
+    // 如果是目录为空的情况，不要显示错误
+    if (error.response && error.response.status === 400) {
+      files.value = []
+    } else {
+      ElMessage.error('获取文件列表失败')
+    }
   } finally {
     loading.value = false
   }
+}
+
+const formatTime = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
 }
 </script>
 

@@ -1,5 +1,6 @@
 package com.filemanage.controller;
 
+import com.filemanage.dto.FileInfo;
 import com.filemanage.dto.MessageResponse;
 import com.filemanage.entity.Company;
 import com.filemanage.entity.FileRecord;
@@ -216,10 +217,20 @@ public class FileController {
         try {
             Path dirA = getDirAPath();
 
-            // Get all files in dirA
-            List<String> allFiles = Files.list(dirA)
+            // Get all files in dirA with metadata
+            List<FileInfo> allFiles = Files.list(dirA)
                     .filter(Files::isRegularFile)
-                    .map(path -> path.getFileName().toString())
+                    .map(path -> {
+                        try {
+                            return new FileInfo(
+                                    path.getFileName().toString(),
+                                    Files.size(path),
+                                    Files.getLastModifiedTime(path).toMillis()
+                            );
+                        } catch (IOException e) {
+                            return new FileInfo(path.getFileName().toString(), 0L, 0L);
+                        }
+                    })
                     .collect(Collectors.toList());
 
             if (currentUser.isAdmin()) {
@@ -228,8 +239,8 @@ public class FileController {
             } else {
                 // User can only see files from their company
                 String companyName = currentUser.getCompanyName();
-                List<String> userFiles = allFiles.stream()
-                        .filter(fileName -> fileName.startsWith(companyName + "_"))
+                List<FileInfo> userFiles = allFiles.stream()
+                        .filter(fileInfo -> fileInfo.getFileName().startsWith(companyName + "_"))
                         .collect(Collectors.toList());
                 return ResponseEntity.ok(userFiles);
             }
@@ -249,16 +260,26 @@ public class FileController {
 
             if (currentUser.isAdmin()) {
                 // Admin can see all company folders and their files
-                Map<String, List<String>> companyFiles = new HashMap<>();
+                Map<String, List<FileInfo>> companyFiles = new HashMap<>();
                 
                 Files.list(dirB)
                         .filter(Files::isDirectory)
                         .forEach(companyPath -> {
                             String companyName = companyPath.getFileName().toString();
                             try {
-                                List<String> files = Files.list(companyPath)
+                                List<FileInfo> files = Files.list(companyPath)
                                         .filter(Files::isRegularFile)
-                                        .map(path -> path.getFileName().toString())
+                                        .map(path -> {
+                                            try {
+                                                return new FileInfo(
+                                                        path.getFileName().toString(),
+                                                        Files.size(path),
+                                                        Files.getLastModifiedTime(path).toMillis()
+                                                );
+                                            } catch (IOException e) {
+                                                return new FileInfo(path.getFileName().toString(), 0L, 0L);
+                                            }
+                                        })
                                         .collect(Collectors.toList());
                                 companyFiles.put(companyName, files);
                             } catch (IOException e) {
@@ -273,9 +294,19 @@ public class FileController {
                     return ResponseEntity.ok(List.of());
                 }
 
-                List<String> files = Files.list(companyDir)
+                List<FileInfo> files = Files.list(companyDir)
                         .filter(Files::isRegularFile)
-                        .map(path -> path.getFileName().toString())
+                        .map(path -> {
+                            try {
+                                return new FileInfo(
+                                        path.getFileName().toString(),
+                                        Files.size(path),
+                                        Files.getLastModifiedTime(path).toMillis()
+                                );
+                            } catch (IOException e) {
+                                return new FileInfo(path.getFileName().toString(), 0L, 0L);
+                            }
+                        })
                         .collect(Collectors.toList());
                 return ResponseEntity.ok(files);
             }

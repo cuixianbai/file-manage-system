@@ -92,14 +92,14 @@ public class AuthController {
                     .body(MessageResponse.error("邮箱已被注册"));
         }
 
-        // Find or create company
+        // Find company
         Company company = companyRepository.findByName(registerRequest.getCompanyName())
-                .orElseGet(() -> {
-                    Company newCompany = Company.builder()
-                            .name(registerRequest.getCompanyName())
-                            .build();
-                    return companyRepository.save(newCompany);
-                });
+                .orElse(null);
+        
+        if (company == null) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("公司不存在，请联系管理创建公司"));
+        }
 
         // Create new user (default status: DISABLED)
         User user = User.builder()

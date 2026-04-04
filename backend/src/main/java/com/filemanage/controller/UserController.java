@@ -99,4 +99,23 @@ public class UserController {
 
         return ResponseEntity.ok(user);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        // Prevent admin from deleting themselves
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl currentUser = (UserDetailsImpl) authentication.getPrincipal();
+
+        if (user.getId().equals(currentUser.getId())) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("不能删除当前登录的管理员账号"));
+        }
+
+        userRepository.delete(user);
+        return ResponseEntity.ok(MessageResponse.success("用户删除成功"));
+    }
 }

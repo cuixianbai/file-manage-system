@@ -44,11 +44,17 @@ spring:
           ssl:
             enable: true
 
-# File Storage Configuration
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# # File Storage Configuration
 file:
   storage:
-    dir-a: ./storage/dirA
-    dir-b: ./storage/dirB
+    dir-a: storage\dirA
+    dir-b: storage\dirB
 
 # JWT Configuration
 jwt:

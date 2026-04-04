@@ -21,7 +21,7 @@ public class CompanyController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    public ResponseEntity<List<Company>> getAllCompanies() {
+    public ResponseEntity<?> getAllCompanies() {
         return ResponseEntity.ok(companyRepository.findAll());
     }
 
@@ -39,5 +39,21 @@ public class CompanyController {
 
         companyRepository.save(company);
         return ResponseEntity.ok(MessageResponse.success("公司创建成功"));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteCompany(@PathVariable Long id) {
+        Company company = companyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("公司不存在"));
+
+        // Check if company has users
+        if (!company.getUsers().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("该公司下还有用户，无法删除"));
+        }
+
+        companyRepository.delete(company);
+        return ResponseEntity.ok(MessageResponse.success("公司删除成功"));
     }
 }

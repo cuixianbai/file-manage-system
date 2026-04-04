@@ -22,13 +22,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -88,21 +92,78 @@ public class FileController {
             }
 
             // Create directory if not exists
-            Path targetLocation = getDirAPath().resolve(targetCompany.getName());
-            Files.createDirectories(targetLocation);
+            Path targetLocation = getDirAPath();
+            System.out.println("Target directory: " + targetLocation.toAbsolutePath());
+            System.out.println("Directory exists: " + Files.exists(targetLocation));
+            try {
+                Files.createDirectories(targetLocation);
+                System.out.println("Directory created successfully");
+            } catch (Exception e) {
+                System.out.println("Failed to create directory: " + e.getMessage());
+                throw e;
+            }
 
             // Generate new filename: CompanyName_OriginalFilename.ext
             String originalFilename = Objects.requireNonNull(file.getOriginalFilename());
+            String companyName = targetCompany.getName();
+            System.out.println("Company name: '" + companyName + "'");
+            System.out.println("Original filename: '" + originalFilename + "'");
+            
             String extension = "";
             int lastDotIndex = originalFilename.lastIndexOf('.');
             if (lastDotIndex > 0) {
                 extension = originalFilename.substring(lastDotIndex);
             }
-            String newFilename = targetCompany.getName() + "_" + originalFilename;
+            String newFilename = companyName + "_" + originalFilename;
+            System.out.println("New filename: '" + newFilename + "'");
 
             // Save file
             Path filePath = targetLocation.resolve(newFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("File path: " + filePath.toAbsolutePath());
+            System.out.println("File exists: " + Files.exists(filePath));
+            
+            // Clean file path to remove any extra spaces
+            String cleanPath = filePath.toAbsolutePath().toString().trim();
+            System.out.println("Clean file path: " + cleanPath);
+            File cleanFile = new File(cleanPath);
+            
+            // Ensure parent directory exists
+            if (!cleanFile.getParentFile().exists()) {
+                System.out.println("Creating parent directory: " + cleanFile.getParentFile());
+                cleanFile.getParentFile().mkdirs();
+            }
+            
+            // Check directory permissions
+            System.out.println("Parent directory exists: " + cleanFile.getParentFile().exists());
+            System.out.println("Parent directory can write: " + cleanFile.getParentFile().canWrite());
+            System.out.println("Parent directory can read: " + cleanFile.getParentFile().canRead());
+            
+            // Read file content into byte array first
+            byte[] fileContent = file.getBytes();
+            System.out.println("File size: " + fileContent.length + " bytes");
+            
+            // Try using FileOutputStream to write the byte array
+            try {
+                System.out.println("Attempting to save file using FileOutputStream with byte array");
+                try (FileOutputStream fos = new FileOutputStream(cleanFile)) {
+                    fos.write(fileContent);
+                    fos.flush();
+                    System.out.println("File saved successfully with FileOutputStream");
+                }
+            } catch (Exception e) {
+                System.out.println("Failed with FileOutputStream approach: " + e.getMessage());
+                
+                // Try using Files.write with byte array
+                try {
+                    System.out.println("Attempting alternative approach with Files.write");
+                    Path cleanFilePath = Paths.get(cleanPath);
+                    Files.write(cleanFilePath, fileContent);
+                    System.out.println("File saved successfully with Files.write");
+                } catch (Exception ex) {
+                    System.out.println("Alternative approach failed: " + ex.getMessage());
+                    throw ex;
+                }
+            }
 
             // Save record to database
             User uploadedBy = userRepository.findById(currentUser.getId())
@@ -122,6 +183,11 @@ public class FileController {
 
             return ResponseEntity.ok(MessageResponse.success("文件上传成功"));
         } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("文件上传失败: " + e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(MessageResponse.error("文件上传失败: " + e.getMessage()));
         }
@@ -150,25 +216,22 @@ public class FileController {
         try {
             Path dirA = getDirAPath();
 
-            if (currentUser.isAdmin()) {
-                // Admin can see all company folders
-                List<String> companies = Files.list(dirA)
-                        .filter(Files::isDirectory)
-                        .map(path -> path.getFileName().toString())
-                        .collect(Collectors.toList());
-                return ResponseEntity.ok(companies);
-            } else {
-                // User can only see their company folder
-                Path companyDir = dirA.resolve(currentUser.getCompanyName());
-                if (!Files.exists(companyDir)) {
-                    return ResponseEntity.ok(List.of());
-                }
+            // Get all files in dirA
+            List<String> allFiles = Files.list(dirA)
+                    .filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString())
+                    .collect(Collectors.toList());
 
-                List<String> files = Files.list(companyDir)
-                        .filter(Files::isRegularFile)
-                        .map(path -> path.getFileName().toString())
+            if (currentUser.isAdmin()) {
+                // Admin can see all files
+                return ResponseEntity.ok(allFiles);
+            } else {
+                // User can only see files from their company
+                String companyName = currentUser.getCompanyName();
+                List<String> userFiles = allFiles.stream()
+                        .filter(fileName -> fileName.startsWith(companyName + "_"))
                         .collect(Collectors.toList());
-                return ResponseEntity.ok(files);
+                return ResponseEntity.ok(userFiles);
             }
         } catch (IOException e) {
             return ResponseEntity.badRequest()
@@ -185,12 +248,24 @@ public class FileController {
             Path dirB = getDirBPath();
 
             if (currentUser.isAdmin()) {
-                // Admin can see all company folders
-                List<String> companies = Files.list(dirB)
+                // Admin can see all company folders and their files
+                Map<String, List<String>> companyFiles = new HashMap<>();
+                
+                Files.list(dirB)
                         .filter(Files::isDirectory)
-                        .map(path -> path.getFileName().toString())
-                        .collect(Collectors.toList());
-                return ResponseEntity.ok(companies);
+                        .forEach(companyPath -> {
+                            String companyName = companyPath.getFileName().toString();
+                            try {
+                                List<String> files = Files.list(companyPath)
+                                        .filter(Files::isRegularFile)
+                                        .map(path -> path.getFileName().toString())
+                                        .collect(Collectors.toList());
+                                companyFiles.put(companyName, files);
+                            } catch (IOException e) {
+                                companyFiles.put(companyName, List.of());
+                            }
+                        });
+                return ResponseEntity.ok(companyFiles);
             } else {
                 // User can only see their company folder
                 Path companyDir = dirB.resolve(currentUser.getCompanyName());

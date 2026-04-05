@@ -19,6 +19,7 @@ axiosInstance.interceptors.request.use(
 
 export const userApi = {
   getAll: (params) => axiosInstance.get(`${API_URL}/users`, { params }),
+  create: (userData) => axiosInstance.post(`${API_URL}/users`, userData),
   updateStatus: (id, status, sendEmail) => axiosInstance.put(`${API_URL}/users/${id}/status`, {
     status,
     sendEmail

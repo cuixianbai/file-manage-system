@@ -44,12 +44,12 @@
             <span>OUTPUT目录</span>
           </el-menu-item>
           
-          <el-menu-item v-if="authStore.isAdmin" index="/users">
+          <el-menu-item v-if="authStore.user?.role === 'ADMIN'" index="/users">
             <el-icon><User /></el-icon>
             <span>用户管理</span>
           </el-menu-item>
           
-          <el-menu-item v-if="authStore.isAdmin" index="/companies">
+          <el-menu-item v-if="authStore.user?.role === 'ADMIN'" index="/companies">
             <el-icon><OfficeBuilding /></el-icon>
             <span>公司管理</span>
           </el-menu-item>

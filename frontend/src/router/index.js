@@ -51,13 +51,13 @@ const router = createRouter({
           path: 'users',
           name: 'Users',
           component: () => import('../views/Users.vue'),
-          meta: { adminOnly: true }
+          meta: { superAdminOnly: true }
         },
         {
           path: 'companies',
           name: 'Companies',
           component: () => import('../views/Companies.vue'),
-          meta: { adminOnly: true }
+          meta: { superAdminOnly: true }
         }
       ]
     }
@@ -69,7 +69,7 @@ router.beforeEach((to, from, next) => {
 
   if (!to.meta.public && !authStore.token) {
     next('/login')
-  } else if (to.meta.adminOnly && !authStore.isAdmin) {
+  } else if (to.meta.superAdminOnly && authStore.user?.role !== 'ADMIN') {
     next('/dashboard')
   } else {
     next()

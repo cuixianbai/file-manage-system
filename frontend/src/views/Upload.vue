@@ -7,7 +7,7 @@
         <span>上传文件</span>
       </template>
       
-      <el-form v-if="authStore.isAdmin" :model="form" label-width="120px">
+      <el-form v-if="authStore.isAdminOrManager" :model="form" label-width="120px">
         <el-form-item label="目标公司">
           <el-select v-model="form.companyId" placeholder="请选择公司" style="width: 100%">
             <el-option
@@ -36,11 +36,11 @@
         <template #tip>
           <div class="upload-tip">
             <p>文件命名规则: 公司名_原始文件名</p>
-            <p v-if="!authStore.isAdmin">
+            <p v-if="!authStore.isAdminOrManager">
               文件将上传至: {{ authStore.user?.companyName }}
             </p>
             <p v-else>
-              管理员请先选择目标公司
+              请先选择目标公司
             </p>
           </div>
         </template>
@@ -78,14 +78,14 @@ const headers = computed(() => ({
   Authorization: `Bearer ${authStore.token}`
 }))
 const uploadData = computed(() => {
-  if (authStore.isAdmin && form.companyId) {
+  if (authStore.isAdminOrManager && form.companyId) {
     return { companyId: form.companyId }
   }
   return {}
 })
 
 onMounted(async () => {
-  if (authStore.isAdmin) {
+  if (authStore.isAdminOrManager) {
     try {
       const response = await companyApi.getAll()
       // 过滤掉系统管理公司
@@ -106,7 +106,7 @@ const handleUpload = async () => {
     return
   }
   
-  if (authStore.isAdmin && !form.companyId) {
+  if (authStore.isAdminOrManager && !form.companyId) {
     ElMessage.warning('请选择目标公司')
     return
   }

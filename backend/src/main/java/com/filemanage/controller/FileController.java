@@ -74,7 +74,7 @@ public class FileController {
     }
 
     @PostMapping("/upload")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
     public ResponseEntity<?> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "companyId", required = false) Long companyId) {
@@ -83,7 +83,7 @@ public class FileController {
 
         try {
             Company targetCompany;
-            if (currentUser.isAdmin()) {
+            if (currentUser.isAdmin() || currentUser.isManager()) {
                 if (companyId == null) {
                     return ResponseEntity.badRequest()
                             .body(MessageResponse.error("管理员必须选择公司"));
@@ -144,7 +144,7 @@ public class FileController {
     }
 
     @GetMapping("/records")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
     public ResponseEntity<List<FileRecord>> getFileRecords(
             @RequestParam(required = false) String originalFilename,
             @RequestParam(required = false) String newFilename,
@@ -154,7 +154,7 @@ public class FileController {
 
         Specification<FileRecord> spec = Specification.where(null);
 
-        if (!currentUser.isAdmin()) {
+        if (!currentUser.isAdmin() && !currentUser.isManager()) {
             spec = spec.and((root, query, cb) -> 
                 cb.equal(root.get("company").get("id"), currentUser.getCompanyId()));
         }
@@ -189,7 +189,7 @@ public class FileController {
     }
 
     @GetMapping("/dirA")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
     public ResponseEntity<?> getDirAFiles() {
         UserDetailsImpl currentUser = getCurrentUser();
 
@@ -211,7 +211,7 @@ public class FileController {
                     })
                     .collect(Collectors.toList());
 
-            if (currentUser.isAdmin()) {
+            if (currentUser.isAdmin() || currentUser.isManager()) {
                 return ResponseEntity.ok(allFiles);
             } else {
                 String companyName = currentUser.getCompanyName();
@@ -227,14 +227,14 @@ public class FileController {
     }
 
     @GetMapping("/dirB")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
     public ResponseEntity<?> getDirBFiles() {
         UserDetailsImpl currentUser = getCurrentUser();
 
         try {
             Path dirB = getDirBPath();
 
-            if (currentUser.isAdmin()) {
+            if (currentUser.isAdmin() || currentUser.isManager()) {
                 Map<String, DirNode> companyFiles = new HashMap<>();
                 
                 Files.list(dirB)
@@ -308,7 +308,7 @@ public class FileController {
     }
 
     @GetMapping("/dirB/download")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
     public ResponseEntity<?> downloadDirBFile(
             @RequestParam String path,
             HttpServletRequest request) {
@@ -326,7 +326,7 @@ public class FileController {
             
             String companyName = parts[0];
             
-            if (!currentUser.isAdmin() && !currentUser.getCompanyName().equals(companyName)) {
+            if (!currentUser.isAdmin() && !currentUser.isManager() && !currentUser.getCompanyName().equals(companyName)) {
                 return ResponseEntity.status(403)
                         .body(MessageResponse.error("无权访问其他公司的文件"));
             }

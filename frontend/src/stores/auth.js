@@ -10,6 +10,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
+  const isManager = computed(() => user.value?.role === 'MANAGER')
+  const isAdminOrManager = computed(() => user.value?.role === 'ADMIN' || user.value?.role === 'MANAGER')
   const currentUser = computed(() => user.value)
 
   // Set axios default header
@@ -31,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
       email: data.email,
       companyId: data.companyId,
       companyName: data.companyName,
-      role: data.role,
+      role: typeof data.role === 'string' ? data.role : data.role?.name || 'USER',
       status: data.status
     }
 
@@ -65,6 +67,8 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     isAdmin,
+    isManager,
+    isAdminOrManager,
     currentUser,
     login,
     register,

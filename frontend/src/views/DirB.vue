@@ -12,7 +12,7 @@
         </div>
       </template>
       
-      <div v-if="authStore.isAdmin" class="admin-view">
+      <div v-if="authStore.isAdminOrManager" class="admin-view">
         <el-collapse v-model="activeCompanies">
           <el-collapse-item
             v-for="company in companies"
@@ -106,33 +106,33 @@ onMounted(() => {
 })
 
 const loadFiles = async () => {
-  loading.value = true
-  try {
-    const response = await fileApi.getDirBFiles()
-    
-    if (authStore.isAdmin) {
-      files.value = response.data
-      companies.value = Object.keys(response.data)
-      activeCompanies.value = []
-    } else {
-      files.value = response.data
-    }
-  } catch (error) {
-    if (error.response && error.response.status === 400) {
-      if (authStore.isAdmin) {
-        companies.value = []
+    loading.value = true
+    try {
+      const response = await fileApi.getDirBFiles()
+      
+      if (authStore.isAdminOrManager) {
+        files.value = response.data
+        companies.value = Object.keys(response.data)
         activeCompanies.value = []
-        files.value = {}
       } else {
-        files.value = { children: [] }
+        files.value = response.data
       }
-    } else {
-      ElMessage.error('获取文件列表失败')
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        if (authStore.isAdminOrManager) {
+          companies.value = []
+          activeCompanies.value = []
+          files.value = {}
+        } else {
+          files.value = { children: [] }
+        }
+      } else {
+        ElMessage.error('获取文件列表失败')
+      }
+    } finally {
+      loading.value = false
     }
-  } finally {
-    loading.value = false
   }
-}
 
 const downloadFile = async (path) => {
   try {

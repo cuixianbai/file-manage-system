@@ -70,4 +70,8 @@ public class UserDetailsImpl implements UserDetails {
     public boolean isAdmin() {
         return role == User.Role.ADMIN;
     }
+
+    public boolean isManager() {
+        return role == User.Role.MANAGER;
+    }
 }

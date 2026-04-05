@@ -6,9 +6,14 @@
       <template #header>
         <div class="card-header">
           <span>用户列表</span>
-          <el-button type="primary" @click="loadUsers">
-            <el-icon><Refresh /></el-icon>刷新
-          </el-button>
+          <div class="header-actions">
+            <el-button type="primary" @click="showCreateDialog">
+              <el-icon><Plus /></el-icon>创建用户
+            </el-button>
+            <el-button type="primary" @click="loadUsers">
+              <el-icon><Refresh /></el-icon>刷新
+            </el-button>
+          </div>
         </div>
       </template>
       
@@ -51,8 +56,8 @@
         <el-table-column prop="email" label="邮箱" min-width="200" />
         <el-table-column prop="role" label="角色" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.role === 'ADMIN' ? 'danger' : 'success'">
-              {{ row.role === 'ADMIN' ? '管理员' : '普通用户' }}
+            <el-tag :type="getRoleType(row.role)">
+              {{ getRoleName(row.role) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -146,21 +151,62 @@
         </el-button>
       </template>
     </el-dialog>
+    
+    <!-- Create User Dialog -->
+    <el-dialog
+      v-model="createDialogVisible"
+      title="创建用户"
+      width="500px"
+    >
+      <el-form :model="createForm" label-width="100px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="createForm.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="createForm.email" placeholder="请输入邮箱" />
+        </el-form-item>
+        <el-form-item label="公司" prop="companyId">
+          <el-select v-model="createForm.companyId" placeholder="请选择公司" style="width: 100%">
+            <el-option
+              v-for="company in companies"
+              :key="company.id"
+              :label="company.name"
+              :value="company.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="角色" prop="role">
+          <el-select v-model="createForm.role" placeholder="请选择角色" style="width: 100%">
+            <el-option label="超级管理员" value="ADMIN" />
+            <el-option label="一般管理员" value="MANAGER" />
+            <el-option label="普通用户" value="USER" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmCreate" :loading="actionLoading">
+          创建
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh, Search } from '@element-plus/icons-vue'
-import { userApi } from '../api'
+import { Refresh, Search, Plus } from '@element-plus/icons-vue'
+import { userApi, companyApi } from '../api'
 
 const users = ref([])
+const companies = ref([])
 const loading = ref(false)
 const actionLoading = ref(false)
 const statusDialogVisible = ref(false)
 const passwordDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
+const createDialogVisible = ref(false)
 const selectedUser = ref(null)
 const sendEmail = ref(false)
 const filters = reactive({
@@ -168,9 +214,16 @@ const filters = reactive({
   companyName: '',
   status: ''
 })
+const createForm = reactive({
+  username: '',
+  email: '',
+  companyId: null,
+  role: 'USER'
+})
 
-onMounted(() => {
+onMounted(async () => {
   loadUsers()
+  await loadCompanies()
 })
 
 const loadUsers = async () => {
@@ -187,6 +240,15 @@ const loadUsers = async () => {
     ElMessage.error('获取用户列表失败')
   } finally {
     loading.value = false
+  }
+}
+
+const loadCompanies = async () => {
+  try {
+    const response = await companyApi.getAll()
+    companies.value = response.data
+  } catch (error) {
+    ElMessage.error('获取公司列表失败')
   }
 }
 
@@ -257,6 +319,59 @@ const confirmDelete = async () => {
     actionLoading.value = false
   }
 }
+
+const showCreateDialog = () => {
+  createForm.username = ''
+  createForm.email = ''
+  createForm.companyId = null
+  createForm.role = 'USER'
+  createDialogVisible.value = true
+}
+
+const confirmCreate = async () => {
+  if (!createForm.username || !createForm.email || !createForm.companyId || !createForm.role) {
+    ElMessage.warning('请填写完整的用户信息')
+    return
+  }
+  
+  actionLoading.value = true
+  try {
+    const response = await userApi.create(createForm)
+    ElMessage.success(response.data.message)
+    createDialogVisible.value = false
+    loadUsers()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '创建用户失败')
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+const getRoleName = (role) => {
+  switch (role) {
+    case 'ADMIN':
+      return '超级管理员'
+    case 'MANAGER':
+      return '一般管理员'
+    case 'USER':
+      return '普通用户'
+    default:
+      return '未知角色'
+  }
+}
+
+const getRoleType = (role) => {
+  switch (role) {
+    case 'ADMIN':
+      return 'danger'
+    case 'MANAGER':
+      return 'warning'
+    case 'USER':
+      return 'success'
+    default:
+      return 'info'
+  }
+}
 </script>
 
 <style scoped>
@@ -273,6 +388,11 @@ const confirmDelete = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .filter-container {

@@ -59,7 +59,7 @@ public class User {
     }
 
     public enum Role {
-        ADMIN, USER
+        ADMIN, MANAGER, USER
     }
 
     public enum UserStatus {

@@ -35,7 +35,7 @@ public class CompanyController {
     private UserRepository userRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
     public ResponseEntity<?> getAllCompanies(
             @RequestParam(required = false) String name) {
 

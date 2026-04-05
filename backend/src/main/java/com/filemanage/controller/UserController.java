@@ -2,9 +2,11 @@ package com.filemanage.controller;
 
 import com.filemanage.dto.MessageResponse;
 import com.filemanage.dto.UserUpdateRequest;
+import com.filemanage.dto.UserCreateRequest;
 import com.filemanage.entity.Company;
 import com.filemanage.entity.User;
 import com.filemanage.repository.UserRepository;
+import com.filemanage.repository.CompanyRepository;
 import com.filemanage.security.UserDetailsImpl;
 import com.filemanage.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CompanyRepository companyRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -152,5 +157,38 @@ public class UserController {
 
         userRepository.delete(user);
         return ResponseEntity.ok(MessageResponse.success("用户删除成功"));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createUser(@RequestBody UserCreateRequest request) {
+        try {
+            // Check if username already exists
+            if (userRepository.existsByUsername(request.getUsername())) {
+                return ResponseEntity.badRequest()
+                        .body(MessageResponse.error("用户名已存在"));
+            }
+
+            // Check if company exists
+            Company company = companyRepository.findById(request.getCompanyId())
+                    .orElseThrow(() -> new RuntimeException("公司不存在"));
+
+            // Create new user
+            User user = User.builder()
+                    .username(request.getUsername())
+                    .password(passwordEncoder.encode(DEFAULT_PASSWORD))
+                    .email(request.getEmail())
+                    .company(company)
+                    .role(request.getRole())
+                    .status(User.UserStatus.ENABLED)
+                    .build();
+
+            userRepository.save(user);
+
+            return ResponseEntity.ok(MessageResponse.success("用户创建成功，初始密码: " + DEFAULT_PASSWORD));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("创建用户失败: " + e.getMessage()));
+        }
     }
 }

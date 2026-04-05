@@ -15,13 +15,36 @@
       <el-table :data="companies" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="公司名称" min-width="200" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'ENABLED' ? 'success' : 'danger'">
+              {{ row.status === 'ENABLED' ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
+            <el-button 
+              v-if="row.status === 'ENABLED'"
+              type="warning"
+              size="small"
+              @click="handleToggleStatus(row)"
+            >
+              禁用
+            </el-button>
+            <el-button 
+              v-else
+              type="success"
+              size="small"
+              @click="handleToggleStatus(row)"
+            >
+              启用
+            </el-button>
             <el-button 
               type="danger"
               size="small"
@@ -145,6 +168,19 @@ const handleCreate = async () => {
 const handleDelete = (company) => {
   selectedCompany.value = company
   deleteDialogVisible.value = true
+}
+
+const handleToggleStatus = async (company) => {
+  const newStatus = company.status === 'ENABLED' ? 'DISABLED' : 'ENABLED'
+  const actionText = newStatus === 'ENABLED' ? '启用' : '禁用'
+  
+  try {
+    const response = await companyApi.updateStatus(company.id, newStatus)
+    ElMessage.success(response.data.message)
+    loadCompanies()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || `${actionText}失败`)
+  }
 }
 
 const confirmDelete = async () => {

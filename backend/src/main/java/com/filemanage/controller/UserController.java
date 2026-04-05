@@ -2,6 +2,7 @@ package com.filemanage.controller;
 
 import com.filemanage.dto.MessageResponse;
 import com.filemanage.dto.UserUpdateRequest;
+import com.filemanage.entity.Company;
 import com.filemanage.entity.User;
 import com.filemanage.repository.UserRepository;
 import com.filemanage.security.UserDetailsImpl;
@@ -53,6 +54,14 @@ public class UserController {
         if (user.getId().equals(currentUser.getId()) && request.getStatus() == User.UserStatus.DISABLED) {
             return ResponseEntity.badRequest()
                     .body(MessageResponse.error("不能禁用当前登录的管理员账号"));
+        }
+
+        if (request.getStatus() == User.UserStatus.ENABLED) {
+            Company company = user.getCompany();
+            if (company != null && company.getStatus() == Company.CompanyStatus.DISABLED) {
+                return ResponseEntity.badRequest()
+                        .body(MessageResponse.error("公司已禁用，无法启用用户"));
+            }
         }
 
         user.setStatus(request.getStatus());

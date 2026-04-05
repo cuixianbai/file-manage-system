@@ -37,7 +37,8 @@ export const userApi = {
 export const companyApi = {
   getAll: () => axiosInstance.get(`${API_URL}/companies`),
   create: (name) => axiosInstance.post(`${API_URL}/companies`, { name }),
-  delete: (id) => axiosInstance.delete(`${API_URL}/companies/${id}`)
+  delete: (id) => axiosInstance.delete(`${API_URL}/companies/${id}`),
+  updateStatus: (id, status) => axiosInstance.put(`${API_URL}/companies/${id}/status`, { status })
 }
 
 // File API

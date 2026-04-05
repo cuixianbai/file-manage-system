@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -196,17 +197,51 @@ public class FileController {
 
     @GetMapping("/records")
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    public ResponseEntity<List<FileRecord>> getFileRecords() {
+    public ResponseEntity<List<FileRecord>> getFileRecords(
+            @RequestParam(required = false) String originalFilename,
+            @RequestParam(required = false) String newFilename,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         UserDetailsImpl currentUser = getCurrentUser();
 
-        List<FileRecord> records;
-        if (currentUser.isAdmin()) {
-            records = fileRecordRepository.findAllByOrderByUploadedAtDesc();
-        } else {
-            records = fileRecordRepository.findByCompanyIdOrderByUploadedAtDesc(currentUser.getCompanyId());
+        Specification<FileRecord> spec = Specification.where(null);
+
+        // Add company filter for non-admin users
+        if (!currentUser.isAdmin()) {
+            spec = spec.and((root, query, cb) -> 
+                cb.equal(root.get("company").get("id"), currentUser.getCompanyId()));
         }
 
-        return ResponseEntity.ok(records);
+        // Add original filename filter
+        if (originalFilename != null && !originalFilename.isEmpty()) {
+            spec = spec.and((root, query, cb) -> 
+                cb.like(cb.lower(root.get("originalFilename")), "%" + originalFilename.toLowerCase() + "%"));
+        }
+
+        // Add new filename filter
+        if (newFilename != null && !newFilename.isEmpty()) {
+            spec = spec.and((root, query, cb) -> 
+                cb.like(cb.lower(root.get("newFilename")), "%" + newFilename.toLowerCase() + "%"));
+        }
+
+        // Add date range filter
+        if (startDate != null && !startDate.isEmpty()) {
+            try {
+                spec = spec.and((root, query, cb) -> 
+                    cb.greaterThanOrEqualTo(root.get("uploadedAt"), java.time.LocalDateTime.parse(startDate)));
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (endDate != null && !endDate.isEmpty()) {
+            try {
+                spec = spec.and((root, query, cb) -> 
+                    cb.lessThanOrEqualTo(root.get("uploadedAt"), java.time.LocalDateTime.parse(endDate)));
+            } catch (Exception ignored) {
+            }
+        }
+
+        return ResponseEntity.ok(fileRecordRepository.findAll(spec));
     }
 
     @GetMapping("/dirA")

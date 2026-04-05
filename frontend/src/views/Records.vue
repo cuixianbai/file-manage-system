@@ -12,7 +12,38 @@
         </div>
       </template>
       
-      <el-table :data="records" v-loading="loading" stripe>
+      <div class="filter-container">
+        <el-input
+          v-model="filters.originalFilename"
+          placeholder="按原始文件名过滤"
+          clearable
+          style="width: 180px; margin-right: 10px;"
+          @clear="loadRecords"
+          @keyup.enter="loadRecords"
+        />
+        <el-input
+          v-model="filters.newFilename"
+          placeholder="按新文件名过滤"
+          clearable
+          style="width: 180px; margin-right: 10px;"
+          @clear="loadRecords"
+          @keyup.enter="loadRecords"
+        />
+        <el-date-picker
+          v-model="filters.dateRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          style="width: 240px; margin-right: 10px;"
+          @change="loadRecords"
+        />
+        <el-button type="primary" @click="loadRecords">
+          <el-icon><Search /></el-icon>搜索
+        </el-button>
+      </div>
+      
+      <el-table :data="records" v-loading="loading" stripe style="margin-top: 15px;">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="originalFilename" label="原始文件名" min-width="200" show-overflow-tooltip />
         <el-table-column prop="newFilename" label="新文件名" min-width="250" show-overflow-tooltip />
@@ -41,13 +72,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import { fileApi } from '../api'
 
 const records = ref([])
 const loading = ref(false)
+const filters = reactive({
+  originalFilename: '',
+  newFilename: '',
+  dateRange: []
+})
 
 onMounted(() => {
   loadRecords()
@@ -56,7 +92,26 @@ onMounted(() => {
 const loadRecords = async () => {
   loading.value = true
   try {
-    const response = await fileApi.getRecords()
+    const params = {}
+    if (filters.originalFilename) params.originalFilename = filters.originalFilename
+    if (filters.newFilename) params.newFilename = filters.newFilename
+    
+    // 处理日期范围
+    if (filters.dateRange && filters.dateRange.length === 2) {
+      const startDate = filters.dateRange[0]
+      const endDate = filters.dateRange[1]
+      
+      // 转换为ISO格式并设置时间
+      const startDateTime = new Date(startDate)
+      startDateTime.setHours(0, 0, 0, 0)
+      params.startDate = startDateTime.toISOString()
+      
+      const endDateTime = new Date(endDate)
+      endDateTime.setHours(23, 59, 59, 999)
+      params.endDate = endDateTime.toISOString()
+    }
+    
+    const response = await fileApi.getRecords(params)
     records.value = response.data
   } catch (error) {
     ElMessage.error('获取记录失败')
@@ -113,5 +168,12 @@ const getStatusText = (status) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 0;
 }
 </style>

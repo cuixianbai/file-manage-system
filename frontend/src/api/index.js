@@ -51,7 +51,7 @@ export const fileApi = {
     }
     return axiosInstance.post(`${API_URL}/files/upload`, formData)
   },
-  getRecords: () => axiosInstance.get(`${API_URL}/files/records`),
+  getRecords: (params) => axiosInstance.get(`${API_URL}/files/records`, { params }),
   getDirAFiles: () => axiosInstance.get(`${API_URL}/files/dirA`),
   getDirBFiles: () => axiosInstance.get(`${API_URL}/files/dirB`),
   downloadDirBFile: (companyName, filename) => {

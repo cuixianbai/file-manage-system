@@ -20,45 +20,65 @@
             :title="company"
             :name="company"
           >
-            <el-empty v-if="!files[company] || files[company].length === 0" description="暂无文件" />
-            <el-list v-else>
-              <el-list-item v-for="file in files[company]" :key="file.fileName" class="file-item">
-                <div style="display: flex; align-items: center; width: 100%;">
-                  <el-icon style="margin-right: 10px;"><Document /></el-icon>
-                  <span class="file-name" style="flex: 1;">{{ file.fileName }}</span>
-                  <span class="file-time" style="color: #909399; font-size: 14px; margin-right: 15px;">{{ formatTime(file.lastModified) }}</span>
-                  <el-button 
-                    type="primary" 
-                    size="small" 
-                    @click="downloadFile(company, file.fileName)"
-                  >
-                    下载
-                  </el-button>
+            <el-empty v-if="!files[company] || !files[company].children || files[company].children.length === 0" description="暂无文件" />
+            <el-tree
+              v-else
+              :data="[files[company]]"
+              :props="treeProps"
+              node-key="path"
+              default-expand-all
+            >
+              <template #default="{ node, data }">
+                <div class="tree-node">
+                  <el-icon v-if="data.type === 'directory'" style="margin-right: 5px; color: #409EFF;"><Folder /></el-icon>
+                  <el-icon v-else style="margin-right: 5px; color: #67C23A;"><Document /></el-icon>
+                  <span class="node-name">{{ data.name }}</span>
+                  <span v-if="data.type === 'file'" class="node-info">
+                    <span class="file-size">{{ formatSize(data.size) }}</span>
+                    <span class="file-time">{{ formatTime(data.lastModified) }}</span>
+                    <el-button 
+                      type="primary" 
+                      size="small" 
+                      @click.stop="downloadFile(data.path)"
+                    >
+                      下载
+                    </el-button>
+                  </span>
                 </div>
-              </el-list-item>
-            </el-list>
+              </template>
+            </el-tree>
           </el-collapse-item>
         </el-collapse>
       </div>
       
       <div v-else class="user-view">
-        <el-empty v-if="files.length === 0" description="暂无文件" />
-        <el-list v-else>
-          <el-list-item v-for="file in files" :key="file.fileName" class="file-item">
-            <div style="display: flex; align-items: center; width: 100%;">
-              <el-icon style="margin-right: 10px;"><Document /></el-icon>
-              <span class="file-name" style="flex: 1;">{{ file.fileName }}</span>
-              <span class="file-time" style="color: #909399; font-size: 14px; margin-right: 15px;">{{ formatTime(file.lastModified) }}</span>
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click="downloadFile(authStore.user?.companyName, file.fileName)"
-              >
-                下载
-              </el-button>
+        <el-empty v-if="!files.children || files.children.length === 0" description="暂无文件" />
+        <el-tree
+          v-else
+          :data="[files]"
+          :props="treeProps"
+          node-key="path"
+          default-expand-all
+        >
+          <template #default="{ node, data }">
+            <div class="tree-node">
+              <el-icon v-if="data.type === 'directory'" style="margin-right: 5px; color: #409EFF;"><Folder /></el-icon>
+              <el-icon v-else style="margin-right: 5px; color: #67C23A;"><Document /></el-icon>
+              <span class="node-name">{{ data.name }}</span>
+              <span v-if="data.type === 'file'" class="node-info">
+                <span class="file-size">{{ formatSize(data.size) }}</span>
+                <span class="file-time">{{ formatTime(data.lastModified) }}</span>
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click.stop="downloadFile(data.path)"
+                >
+                  下载
+                </el-button>
+              </span>
             </div>
-          </el-list-item>
-        </el-list>
+          </template>
+        </el-tree>
       </div>
     </el-card>
   </div>
@@ -67,7 +87,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh, Document } from '@element-plus/icons-vue'
+import { Refresh, Document, Folder } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 import { fileApi } from '../api'
 
@@ -76,6 +96,11 @@ const files = ref({})
 const companies = ref([])
 const activeCompanies = ref([])
 const loading = ref(false)
+
+const treeProps = {
+  children: 'children',
+  label: 'name'
+}
 
 onMounted(() => {
   loadFiles()
@@ -87,24 +112,20 @@ const loadFiles = async () => {
     const response = await fileApi.getDirBFiles()
     
     if (authStore.isAdmin) {
-      // Admin sees all companies and their files
       files.value = response.data
       companies.value = Object.keys(response.data)
       activeCompanies.value = Object.keys(response.data)
     } else {
-      // User sees only their company files
       files.value = response.data
     }
   } catch (error) {
-    // 如果是目录为空的情况，不要显示错误
     if (error.response && error.response.status === 400) {
-      // 目录为空，设置为空数组或对象
       if (authStore.isAdmin) {
         companies.value = []
         activeCompanies.value = []
         files.value = {}
       } else {
-        files.value = []
+        files.value = { children: [] }
       }
     } else {
       ElMessage.error('获取文件列表失败')
@@ -114,13 +135,14 @@ const loadFiles = async () => {
   }
 }
 
-const downloadFile = async (companyName, filename) => {
+const downloadFile = async (path) => {
   try {
-    const response = await fileApi.downloadDirBFile(companyName, filename)
+    const response = await fileApi.downloadDirBFile(path)
     const blob = new Blob([response.data])
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
+    const filename = path.split('/').pop()
     link.setAttribute('download', filename)
     document.body.appendChild(link)
     link.click()
@@ -132,6 +154,13 @@ const downloadFile = async (companyName, filename) => {
   }
 }
 
+const formatSize = (bytes) => {
+  if (!bytes) return ''
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
+}
+
 const formatTime = (timestamp) => {
   if (!timestamp) return ''
   const date = new Date(timestamp)
@@ -140,8 +169,7 @@ const formatTime = (timestamp) => {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
+    minute: '2-digit'
   })
 }
 </script>
@@ -162,15 +190,34 @@ const formatTime = (timestamp) => {
   align-items: center;
 }
 
-.file-item {
+.tree-node {
   display: flex;
   align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #ebeef5;
+  width: 100%;
+  padding: 5px 0;
 }
 
-.file-name {
+.node-name {
   flex: 1;
-  margin-left: 10px;
+  margin-left: 5px;
+}
+
+.node-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 20px;
+}
+
+.file-size {
+  color: #909399;
+  font-size: 12px;
+  min-width: 80px;
+}
+
+.file-time {
+  color: #909399;
+  font-size: 12px;
+  min-width: 120px;
 }
 </style>

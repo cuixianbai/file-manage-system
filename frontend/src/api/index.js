@@ -28,7 +28,8 @@ export const userApi = {
     sendEmail
   }),
   delete: (id) => axiosInstance.delete(`${API_URL}/users/${id}`),
-  getMe: () => axiosInstance.get(`${API_URL}/users/me`)
+  getMe: () => axiosInstance.get(`${API_URL}/users/me`),
+  changePassword: (passwordData) => axiosInstance.post(`${API_URL}/users/change-password`, passwordData)
 }
 
 export const companyApi = {

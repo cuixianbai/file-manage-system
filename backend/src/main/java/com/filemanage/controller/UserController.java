@@ -3,6 +3,7 @@ package com.filemanage.controller;
 import com.filemanage.dto.MessageResponse;
 import com.filemanage.dto.UserUpdateRequest;
 import com.filemanage.dto.UserCreateRequest;
+import com.filemanage.dto.ChangePasswordRequest;
 import com.filemanage.entity.Company;
 import com.filemanage.entity.User;
 import com.filemanage.repository.UserRepository;
@@ -129,7 +130,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
     public ResponseEntity<?> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -138,6 +139,39 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
         return ResponseEntity.ok(user);
+    }
+    
+    @PostMapping("/change-password")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('USER')")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            
+            // 验证当前密码
+            if (!passwordEncoder.matches(request.getCurrentPassword(), userDetails.getPassword())) {
+                return ResponseEntity.badRequest()
+                        .body(MessageResponse.error("当前密码错误"));
+            }
+            
+            // 验证新密码长度
+            if (request.getNewPassword().length() < 6) {
+                return ResponseEntity.badRequest()
+                        .body(MessageResponse.error("新密码长度不能少于6个字符"));
+            }
+            
+            // 更新密码
+            User user = userRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new RuntimeException("用户不存在"));
+            
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            userRepository.save(user);
+            
+            return ResponseEntity.ok(MessageResponse.success("密码修改成功"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("修改密码失败: " + e.getMessage()));
+        }
     }
 
     @DeleteMapping("/{id}")

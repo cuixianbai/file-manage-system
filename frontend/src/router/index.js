@@ -58,6 +58,11 @@ const router = createRouter({
           name: 'Companies',
           component: () => import('../views/Companies.vue'),
           meta: { superAdminOnly: true }
+        },
+        {
+          path: 'password',
+          name: 'Password',
+          component: () => import('../views/Password.vue')
         }
       ]
     }

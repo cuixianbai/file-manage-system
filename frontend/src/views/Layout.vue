@@ -53,6 +53,11 @@
             <el-icon><OfficeBuilding /></el-icon>
             <span>公司管理</span>
           </el-menu-item>
+          
+          <el-menu-item index="/password">
+            <el-icon><Lock /></el-icon>
+            <span>设置密码</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
       
@@ -69,7 +74,7 @@ import { ElMessageBox } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
 import { 
   HomeFilled, UploadFilled, Document, Folder, 
-  FolderOpened, User, OfficeBuilding 
+  FolderOpened, User, OfficeBuilding, Lock 
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

@@ -88,7 +88,8 @@ onMounted(async () => {
   if (authStore.isAdmin) {
     try {
       const response = await companyApi.getAll()
-      companies.value = response.data
+      // 过滤掉系统管理公司
+      companies.value = response.data.filter(company => company.name !== '系统管理')
     } catch (error) {
       ElMessage.error('获取公司列表失败')
     }

@@ -5,7 +5,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>PDF/JPG文件列表</span>
+          <span>文件列表</span>
           <el-button type="primary" @click="loadFiles">
             <el-icon><Refresh /></el-icon>刷新
           </el-button>
@@ -23,10 +23,9 @@
             <el-empty v-if="!files[company] || !files[company].children || files[company].children.length === 0" description="暂无文件" />
             <el-tree
               v-else
-              :data="[files[company]]"
+              :data="files[company].children"
               :props="treeProps"
               node-key="path"
-              default-expand-all
             >
               <template #default="{ node, data }">
                 <div class="tree-node">
@@ -114,7 +113,7 @@ const loadFiles = async () => {
     if (authStore.isAdmin) {
       files.value = response.data
       companies.value = Object.keys(response.data)
-      activeCompanies.value = Object.keys(response.data)
+      activeCompanies.value = []
     } else {
       files.value = response.data
     }

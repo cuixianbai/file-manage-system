@@ -6,15 +6,22 @@ import com.filemanage.entity.Company;
 import com.filemanage.repository.CompanyRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/companies")
 public class CompanyController {
+
+    @Value("${file.storage.dir-b}")
+    private String dirBPath;
 
     @Autowired
     private CompanyRepository companyRepository;
@@ -38,6 +45,16 @@ public class CompanyController {
                 .build();
 
         companyRepository.save(company);
+
+        try {
+            Path dirBLocation = Paths.get(dirBPath).toAbsolutePath().normalize();
+            Path companyDir = dirBLocation.resolve(request.getName());
+            Files.createDirectories(companyDir);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("创建公司目录失败: " + e.getMessage()));
+        }
+
         return ResponseEntity.ok(MessageResponse.success("公司创建成功"));
     }
 

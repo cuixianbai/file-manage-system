@@ -21,7 +21,7 @@ axiosInstance.interceptors.request.use(
 
 // User API
 export const userApi = {
-  getAll: () => axiosInstance.get(`${API_URL}/users`),
+  getAll: (params) => axiosInstance.get(`${API_URL}/users`, { params }),
   updateStatus: (id, status, sendEmail) => axiosInstance.put(`${API_URL}/users/${id}/status`, {
     status,
     sendEmail
@@ -35,7 +35,7 @@ export const userApi = {
 
 // Company API
 export const companyApi = {
-  getAll: () => axiosInstance.get(`${API_URL}/companies`),
+  getAll: (params) => axiosInstance.get(`${API_URL}/companies`, { params }),
   create: (name) => axiosInstance.post(`${API_URL}/companies`, { name }),
   delete: (id) => axiosInstance.delete(`${API_URL}/companies/${id}`),
   updateStatus: (id, status) => axiosInstance.put(`${API_URL}/companies/${id}/status`, { status })

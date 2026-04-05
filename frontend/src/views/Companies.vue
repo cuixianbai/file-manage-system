@@ -12,7 +12,21 @@
         </div>
       </template>
       
-      <el-table :data="companies" v-loading="loading" stripe>
+      <div class="filter-container">
+        <el-input
+          v-model="filters.name"
+          placeholder="按公司名称过滤"
+          clearable
+          style="width: 200px; margin-right: 10px;"
+          @clear="loadCompanies"
+          @keyup.enter="loadCompanies"
+        />
+        <el-button type="primary" @click="loadCompanies">
+          <el-icon><Search /></el-icon>搜索
+        </el-button>
+      </div>
+      
+      <el-table :data="companies" v-loading="loading" stripe style="margin-top: 15px;">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="公司名称" min-width="200" />
         <el-table-column prop="status" label="状态" width="100">
@@ -104,7 +118,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import { companyApi } from '../api'
 
 const companies = ref([])
@@ -115,6 +129,9 @@ const deleteDialogVisible = ref(false)
 const selectedCompany = ref(null)
 const formRef = ref(null)
 const form = reactive({
+  name: ''
+})
+const filters = reactive({
   name: ''
 })
 
@@ -131,7 +148,10 @@ onMounted(() => {
 const loadCompanies = async () => {
   loading.value = true
   try {
-    const response = await companyApi.getAll()
+    const params = {}
+    if (filters.name) params.name = filters.name
+    
+    const response = await companyApi.getAll(params)
     companies.value = response.data
   } catch (error) {
     ElMessage.error('获取公司列表失败')
@@ -220,5 +240,12 @@ const formatDate = (dateStr) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 0;
 }
 </style>

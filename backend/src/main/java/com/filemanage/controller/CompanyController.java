@@ -9,6 +9,7 @@ import com.filemanage.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,8 +36,17 @@ public class CompanyController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    public ResponseEntity<?> getAllCompanies() {
-        return ResponseEntity.ok(companyRepository.findAll());
+    public ResponseEntity<?> getAllCompanies(
+            @RequestParam(required = false) String name) {
+
+        Specification<Company> spec = Specification.where(null);
+
+        if (name != null && !name.isEmpty()) {
+            spec = spec.and((root, query, cb) -> 
+                cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+        }
+
+        return ResponseEntity.ok(companyRepository.findAll(spec));
     }
 
     @PostMapping

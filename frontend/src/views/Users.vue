@@ -12,7 +12,39 @@
         </div>
       </template>
       
-      <el-table :data="users" v-loading="loading" stripe>
+      <div class="filter-container">
+        <el-input
+          v-model="filters.username"
+          placeholder="按账号过滤"
+          clearable
+          style="width: 150px; margin-right: 10px;"
+          @clear="loadUsers"
+          @keyup.enter="loadUsers"
+        />
+        <el-input
+          v-model="filters.companyName"
+          placeholder="按公司名称过滤"
+          clearable
+          style="width: 150px; margin-right: 10px;"
+          @clear="loadUsers"
+          @keyup.enter="loadUsers"
+        />
+        <el-select
+          v-model="filters.status"
+          placeholder="按状态过滤"
+          clearable
+          style="width: 120px; margin-right: 10px;"
+          @change="loadUsers"
+        >
+          <el-option label="启用" value="ENABLED" />
+          <el-option label="禁用" value="DISABLED" />
+        </el-select>
+        <el-button type="primary" @click="loadUsers">
+          <el-icon><Search /></el-icon>搜索
+        </el-button>
+      </div>
+      
+      <el-table :data="users" v-loading="loading" stripe style="margin-top: 15px;">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="账号" width="120" />
         <el-table-column prop="company.name" label="公司" width="150" />
@@ -118,9 +150,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import { userApi } from '../api'
 
 const users = ref([])
@@ -131,6 +163,11 @@ const passwordDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const selectedUser = ref(null)
 const sendEmail = ref(false)
+const filters = reactive({
+  username: '',
+  companyName: '',
+  status: ''
+})
 
 onMounted(() => {
   loadUsers()
@@ -139,7 +176,12 @@ onMounted(() => {
 const loadUsers = async () => {
   loading.value = true
   try {
-    const response = await userApi.getAll()
+    const params = {}
+    if (filters.username) params.username = filters.username
+    if (filters.companyName) params.companyName = filters.companyName
+    if (filters.status) params.status = filters.status
+    
+    const response = await userApi.getAll(params)
     users.value = response.data
   } catch (error) {
     ElMessage.error('获取用户列表失败')
@@ -231,5 +273,12 @@ const confirmDelete = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 0;
 }
 </style>

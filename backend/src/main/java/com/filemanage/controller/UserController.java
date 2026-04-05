@@ -8,6 +8,7 @@ import com.filemanage.repository.UserRepository;
 import com.filemanage.security.UserDetailsImpl;
 import com.filemanage.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -34,8 +35,33 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userRepository.findAll());
+    public ResponseEntity<List<User>> getAllUsers(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false) String status) {
+
+        Specification<User> spec = Specification.where(null);
+
+        if (username != null && !username.isEmpty()) {
+            spec = spec.and((root, query, cb) -> 
+                cb.like(cb.lower(root.get("username")), "%" + username.toLowerCase() + "%"));
+        }
+
+        if (companyName != null && !companyName.isEmpty()) {
+            spec = spec.and((root, query, cb) -> 
+                cb.like(cb.lower(root.get("company").get("name")), "%" + companyName.toLowerCase() + "%"));
+        }
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                User.UserStatus userStatus = User.UserStatus.valueOf(status);
+                spec = spec.and((root, query, cb) -> 
+                    cb.equal(root.get("status"), userStatus));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        return ResponseEntity.ok(userRepository.findAll(spec));
     }
 
     @PutMapping("/{id}/status")

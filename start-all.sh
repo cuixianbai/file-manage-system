@@ -44,7 +44,7 @@ echo ""
 # 启动后端服务
 echo "正在启动后端服务..."
 if [ "$USE_JAR" -eq 1 ]; then
-    osascript -e 'tell application "Terminal" to do script "cd \"'$(dirname "$0")'\" && cd backend && java -jar target/file-manage-system-1.0.0.jar"'
+    osascript -e 'tell application "Terminal" to do script "cd \"'$(dirname "$0")'\" && cd backend && java -jar target/file-manage-system-1.0.0.jar --spring.profiles.active=mac"'
 else
     osascript -e 'tell application "Terminal" to do script "cd \"'$(dirname "$0")'\" && ./start-backend.sh"'
 fi

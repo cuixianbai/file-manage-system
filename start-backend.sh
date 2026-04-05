@@ -1,7 +1,7 @@
 #!/bin/bash
-echo "========================================"
+echo "======================================="
 echo " 启动企业多公司文件管理系统 - 后端服务"
-echo "========================================"
+echo "======================================="
 
 # 检查 Java 是否安装
 echo "检查 Java 环境..."
@@ -18,4 +18,5 @@ echo ""
 echo "正在编译并启动后端服务..."
 echo "默认管理员账号: admin / admin123"
 echo ""
-mvn spring-boot:run
+# 在Mac环境下使用Mac配置文件
+mvn spring-boot:run -Dspring.profiles.active=mac

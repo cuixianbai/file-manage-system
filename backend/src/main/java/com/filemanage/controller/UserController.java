@@ -173,6 +173,19 @@ public class UserController {
             Company company = companyRepository.findById(request.getCompanyId())
                     .orElseThrow(() -> new RuntimeException("公司不存在"));
 
+            // Validate role based on company
+            if (company.getName().equals("系统管理")) {
+                if (request.getRole() != User.Role.ADMIN && request.getRole() != User.Role.MANAGER) {
+                    return ResponseEntity.badRequest()
+                            .body(MessageResponse.error("系统管理公司只能创建超级管理员或一般管理员"));
+                }
+            } else {
+                if (request.getRole() != User.Role.USER) {
+                    return ResponseEntity.badRequest()
+                            .body(MessageResponse.error("非系统管理公司只能创建普通用户"));
+                }
+            }
+
             // Create new user
             User user = User.builder()
                     .username(request.getUsername())

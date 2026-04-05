@@ -166,7 +166,7 @@
           <el-input v-model="createForm.email" placeholder="请输入邮箱" />
         </el-form-item>
         <el-form-item label="公司" prop="companyId">
-          <el-select v-model="createForm.companyId" placeholder="请选择公司" style="width: 100%">
+          <el-select v-model="createForm.companyId" placeholder="请选择公司" style="width: 100%" @change="handleCompanyChange">
             <el-option
               v-for="company in companies"
               :key="company.id"
@@ -177,9 +177,9 @@
         </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select v-model="createForm.role" placeholder="请选择角色" style="width: 100%">
-            <el-option label="超级管理员" value="ADMIN" />
-            <el-option label="一般管理员" value="MANAGER" />
-            <el-option label="普通用户" value="USER" />
+            <el-option v-if="isSystemCompany" label="超级管理员" value="ADMIN" />
+            <el-option v-if="isSystemCompany" label="一般管理员" value="MANAGER" />
+            <el-option v-else label="普通用户" value="USER" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -220,6 +220,8 @@ const createForm = reactive({
   companyId: null,
   role: 'USER'
 })
+
+const isSystemCompany = ref(false)
 
 onMounted(async () => {
   loadUsers()
@@ -325,13 +327,49 @@ const showCreateDialog = () => {
   createForm.email = ''
   createForm.companyId = null
   createForm.role = 'USER'
+  isSystemCompany.value = false
   createDialogVisible.value = true
+}
+
+const handleCompanyChange = (companyId) => {
+  if (companyId) {
+    const selectedCompany = companies.value.find(company => company.id === companyId)
+    isSystemCompany.value = selectedCompany?.name === '系统管理'
+    // 自动设置默认角色
+    if (isSystemCompany.value) {
+      createForm.role = 'MANAGER'
+    } else {
+      createForm.role = 'USER'
+    }
+  } else {
+    isSystemCompany.value = false
+    createForm.role = 'USER'
+  }
 }
 
 const confirmCreate = async () => {
   if (!createForm.username || !createForm.email || !createForm.companyId || !createForm.role) {
     ElMessage.warning('请填写完整的用户信息')
     return
+  }
+  
+  // 校验角色与公司的匹配关系
+  const selectedCompany = companies.value.find(company => company.id === createForm.companyId)
+  if (!selectedCompany) {
+    ElMessage.warning('请选择有效的公司')
+    return
+  }
+  
+  if (selectedCompany.name === '系统管理') {
+    if (!['ADMIN', 'MANAGER'].includes(createForm.role)) {
+      ElMessage.warning('系统管理公司只能创建超级管理员或一般管理员')
+      return
+    }
+  } else {
+    if (createForm.role !== 'USER') {
+      ElMessage.warning('非系统管理公司只能创建普通用户')
+      return
+    }
   }
   
   actionLoading.value = true

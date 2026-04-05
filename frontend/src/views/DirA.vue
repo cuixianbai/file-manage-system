@@ -19,6 +19,7 @@
             <div style="display: flex; align-items: center; width: 100%;">
               <el-icon style="margin-right: 10px;"><Document /></el-icon>
               <span class="file-name" style="flex: 1;">{{ file.fileName }}</span>
+              <span class="file-size" style="color: #909399; font-size: 14px; margin-right: 20px;">{{ formatSize(file.fileSize) }}</span>
               <span class="file-time" style="color: #909399; font-size: 14px;">{{ formatTime(file.lastModified) }}</span>
             </div>
           </el-list-item>
@@ -49,7 +50,6 @@ const loadFiles = async () => {
     const response = await fileApi.getDirAFiles()
     files.value = response.data
   } catch (error) {
-    // 如果是目录为空的情况，不要显示错误
     if (error.response && error.response.status === 400) {
       files.value = []
     } else {
@@ -58,6 +58,13 @@ const loadFiles = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const formatSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
 }
 
 const formatTime = (timestamp) => {
@@ -92,5 +99,10 @@ const formatTime = (timestamp) => {
 
 .file-name {
   margin-left: 10px;
+}
+
+.file-size {
+  min-width: 80px;
+  text-align: right;
 }
 </style>

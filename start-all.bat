@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ========================================
-echo  启动企业多公司文件管理系统
+echo  启动企业多公司文件管理系统（Windows开发环境）
 echo ========================================
 echo.
 
@@ -45,6 +45,12 @@ if %errorlevel% neq 0 (
 echo Node.js 环境检查通过
 echo.
 
+:: 创建数据目录（如果不存在）
+if not exist "%~dp0data" (
+    echo 创建数据目录...
+    mkdir "%~dp0data"
+)
+
 :: 启动后端服务
 echo 正在启动后端服务...
 if %USE_JAR% equ 1 (
@@ -53,12 +59,16 @@ if %USE_JAR% equ 1 (
     start "后端服务" cmd /k "cd /d "%~dp0backend" && mvn spring-boot:run"
 )
 echo.
-timeout /t 5 /nobreak >nul
+echo 后端服务启动中...
+timeout /t 8 /nobreak >nul
 
 :: 启动前端服务
 echo 正在启动前端服务...
 start "前端服务" cmd /k "cd /d "%~dp0frontend" && npm install && npm run dev"
 echo.
+echo 前端服务启动中...
+timeout /t 5 /nobreak >nul
+
 echo ========================================
 echo  系统启动完成！
 echo ========================================
@@ -66,4 +76,10 @@ echo 后端地址: http://localhost:8080
 echo 前端地址: http://localhost:5173
 echo 默认管理员: admin / admin123
 echo ========================================
+echo.
+echo 注意事项：
+echo 1. 数据存储在 data 目录中
+echo 2. 后端服务使用 application.yml 配置
+echo 3. 如需停止服务，请关闭相应的命令窗口
+echo.
 pause

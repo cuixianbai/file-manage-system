@@ -50,11 +50,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-# # File Storage Configuration
+# File Storage Configuration
 file:
   storage:
-    dir-a: storage\dirA
-    dir-b: storage\dirB
+    dir-a: ..\storage\INPUT
+    dir-b: ..\storage\OUTPUT
 
 # JWT Configuration
 jwt:

@@ -15,17 +15,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
     database-platform: org.hibernate.dialect.H2Dialect
 
-  # H2 Console (开发调试用)
+  # H2 Console (生产环境关闭)
   h2:
     console:
-      enabled: true
-      path: /h2-console
+      enabled: false
 
   # Mail Configuration (QQ邮箱SMTP)
   mail:
@@ -53,16 +52,17 @@ spring:
 # File Storage Configuration
 file:
   storage:
-    dir-a: storage/dirA
-    dir-b: storage/dirB
+    dir-a: ..\storage\INPUT
+    dir-b: ..\storage\OUTPUT
 
 # JWT Configuration
 jwt:
   secret: your-256-bit-secret-key-for-jwt-signing-must-be-at-least-32-characters-long
   expiration: 86400000
 
-# Logging
+# Logging (生产环境级别)
 logging:
   level:
-    com.filemanage: DEBUG
-    org.springframework.security: DEBUG
+    com.filemanage: WARN
+    org.springframework.security: WARN
+    org.springframework.web: WARN

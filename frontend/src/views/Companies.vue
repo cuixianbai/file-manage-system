@@ -43,29 +43,40 @@
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button 
-              v-if="row.status === 'ENABLED'"
-              type="warning"
-              size="small"
-              @click="handleToggleStatus(row)"
-            >
-              禁用
-            </el-button>
-            <el-button 
-              v-else
-              type="success"
-              size="small"
-              @click="handleToggleStatus(row)"
-            >
-              启用
-            </el-button>
-            <el-button 
-              type="danger"
-              size="small"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <template v-if="row.name === '系统管理'">
+              <el-button 
+                type="info"
+                size="small"
+                disabled
+              >
+                系统公司
+              </el-button>
+            </template>
+            <template v-else>
+              <el-button 
+                v-if="row.status === 'ENABLED'"
+                type="warning"
+                size="small"
+                @click="handleToggleStatus(row)"
+              >
+                禁用
+              </el-button>
+              <el-button 
+                v-else
+                type="success"
+                size="small"
+                @click="handleToggleStatus(row)"
+              >
+                启用
+              </el-button>
+              <el-button 
+                type="danger"
+                size="small"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>

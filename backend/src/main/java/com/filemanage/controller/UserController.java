@@ -79,6 +79,12 @@ public class UserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
+        // 系统管理员账号不能禁用
+        if (user.getRole() == User.Role.ADMIN && user.getUsername().equals("admin")) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("系统管理员账号不能禁用"));
+        }
+
         // Prevent admin from disabling themselves
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl currentUser = (UserDetailsImpl) authentication.getPrincipal();
@@ -179,6 +185,12 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        // 系统管理员账号不能删除
+        if (user.getRole() == User.Role.ADMIN && user.getUsername().equals("admin")) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("系统管理员账号不能删除"));
+        }
 
         // Prevent admin from deleting themselves
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

@@ -70,27 +70,52 @@
         </el-table-column>
         <el-table-column label="操作" width="380" fixed="right">
           <template #default="{ row }">
-            <el-button 
-              :type="row.status === 'ENABLED' ? 'danger' : 'success'"
-              size="small"
-              @click="toggleStatus(row)"
-            >
-              {{ row.status === 'ENABLED' ? '禁用' : '启用' }}
-            </el-button>
-            <el-button 
-              type="warning"
-              size="small"
-              @click="resetPassword(row)"
-            >
-              重置密码
-            </el-button>
-            <el-button 
-              type="danger"
-              size="small"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <template v-if="row.role === 'ADMIN' && row.username === 'admin'">
+              <el-button 
+                type="info"
+                size="small"
+                disabled
+              >
+                系统管理员
+              </el-button>
+              <el-button 
+                type="warning"
+                size="small"
+                @click="resetPassword(row)"
+              >
+                重置密码
+              </el-button>
+              <el-button 
+                type="danger"
+                size="small"
+                disabled
+              >
+                删除
+              </el-button>
+            </template>
+            <template v-else>
+              <el-button 
+                :type="row.status === 'ENABLED' ? 'danger' : 'success'"
+                size="small"
+                @click="toggleStatus(row)"
+              >
+                {{ row.status === 'ENABLED' ? '禁用' : '启用' }}
+              </el-button>
+              <el-button 
+                type="warning"
+                size="small"
+                @click="resetPassword(row)"
+              >
+                重置密码
+              </el-button>
+              <el-button 
+                type="danger"
+                size="small"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -261,6 +286,13 @@ const toggleStatus = (user) => {
 }
 
 const confirmStatusChange = async () => {
+  // 系统管理员不能禁用
+  if (selectedUser.value.role === 'ADMIN' && selectedUser.value.username === 'admin') {
+    ElMessage.warning('系统管理员账号不能禁用')
+    statusDialogVisible.value = false
+    return
+  }
+  
   actionLoading.value = true
   try {
     const newStatus = selectedUser.value.status === 'ENABLED' ? 'DISABLED' : 'ENABLED'

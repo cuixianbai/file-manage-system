@@ -81,14 +81,48 @@ public class CompanyController {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("公司不存在"));
 
+        // 系统管理公司不能删除
+        if (company.getName().equals("系统管理")) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("系统管理公司不能删除"));
+        }
+
         // Check if company has users
         if (!company.getUsers().isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(MessageResponse.error("该公司下还有用户，无法删除"));
         }
 
+        // 删除公司对应的OUTPUT目录
+        try {
+            Path dirBLocation = Paths.get(dirBPath).toAbsolutePath().normalize();
+            Path companyDir = dirBLocation.resolve(company.getName());
+            if (Files.exists(companyDir)) {
+                // 递归删除目录及其内容
+                deleteDirectory(companyDir);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("删除公司目录失败: " + e.getMessage()));
+        }
+
         companyRepository.delete(company);
         return ResponseEntity.ok(MessageResponse.success("公司删除成功"));
+    }
+
+    // 递归删除目录
+    private void deleteDirectory(Path directory) throws Exception {
+        if (Files.exists(directory)) {
+            Files.walk(directory)
+                .sorted((a, b) -> b.compareTo(a)) // 从子目录开始删除
+                .forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (Exception e) {
+                        throw new RuntimeException("删除文件失败: " + path, e);
+                    }
+                });
+        }
     }
 
     @PutMapping("/{id}/status")
@@ -96,6 +130,12 @@ public class CompanyController {
     public ResponseEntity<?> updateCompanyStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("公司不存在"));
+
+        // 系统管理公司不能禁用
+        if (company.getName().equals("系统管理")) {
+            return ResponseEntity.badRequest()
+                    .body(MessageResponse.error("系统管理公司不能禁用"));
+        }
 
         String newStatus = request.get("status");
         if (newStatus == null) {

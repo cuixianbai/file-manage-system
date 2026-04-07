@@ -15,9 +15,13 @@ fi
 # 启动后端服务
 echo "启动后端服务..."
 cd "$(dirname "$0")/backend"
-java -jar target/file-manage-system-1.0.0.jar --spring.profiles.active=mac &
+# 创建logs目录
+mkdir -p logs
+# 启动后端服务并将日志输出到文件
+java -jar target/file-manage-system-1.0.0.jar --spring.profiles.active=mac > logs/backend.log 2>&1 &
 BACKEND_PID=$!
 echo "后端服务已启动，PID: $BACKEND_PID"
+echo "日志输出到: logs/backend.log"
 
 # 等待后端服务启动
 echo "后端服务启动中..."

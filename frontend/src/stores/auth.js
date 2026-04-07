@@ -27,13 +27,23 @@ export const useAuthStore = defineStore('auth', () => {
 
     const data = response.data
     token.value = data.token
+    
+    // 处理role字段，确保正确获取角色名称
+    let roleValue = 'USER'
+    if (typeof data.role === 'string') {
+      roleValue = data.role
+    } else if (data.role) {
+      // 尝试获取枚举值的名称
+      roleValue = data.role.name || data.role.toString() || 'USER'
+    }
+    
     user.value = {
       id: data.id,
       username: data.username,
       email: data.email,
       companyId: data.companyId,
       companyName: data.companyName,
-      role: typeof data.role === 'string' ? data.role : data.role?.name || 'USER',
+      role: roleValue,
       status: data.status
     }
 

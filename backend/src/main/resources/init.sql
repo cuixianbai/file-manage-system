@@ -1,5 +1,5 @@
 -- 企业多公司文件管理系统数据库初始化脚本
--- 生成时间: 2026-04-06
+-- 生成时间: 2026-04-07
 
 -- 创建公司表
 CREATE TABLE IF NOT EXISTS companies (
@@ -39,18 +39,18 @@ CREATE TABLE IF NOT EXISTS file_records (
 );
 
 -- 创建索引
-CREATE INDEX IF NOT EXISTS idx_users_company_id ON users(company_id);
-CREATE INDEX IF NOT EXISTS idx_file_records_company_id ON file_records(company_id);
-CREATE INDEX IF NOT EXISTS idx_file_records_uploaded_by ON file_records(uploaded_by);
+CREATE INDEX idx_users_company_id ON users(company_id);
+CREATE INDEX idx_file_records_company_id ON file_records(company_id);
+CREATE INDEX idx_file_records_uploaded_by ON file_records(uploaded_by);
 
 -- 插入基础数据
 -- 插入默认公司
 INSERT INTO companies (name) VALUES ('系统管理') ON DUPLICATE KEY UPDATE name = '系统管理';
 
--- 插入默认管理员用户 (密码: admin123)
+-- 插入默认管理员用户 (密码: qwe123)
 INSERT INTO users (username, password, email, company_id, role, status) 
-VALUES ('admin', '$2a$10$eNf1fF3JQxL9V7h7X9X9X9eQ7q7q7q7q7q7q7q7q7q7q7q7q7q7', 'admin@example.com', 1, 'ADMIN', 'ENABLED') 
-ON DUPLICATE KEY UPDATE status = 'ENABLED';
+VALUES ('admin', 'qwe123', 'admin@example.com', 1, 'ADMIN', 'ENABLED') 
+ON DUPLICATE KEY UPDATE password = 'qwe123', status = 'ENABLED';
 
 -- 提交事务
 COMMIT;

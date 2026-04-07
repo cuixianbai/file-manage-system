@@ -5,12 +5,12 @@ spring:
   application:
     name: file-manage-system
 
-  # H2 Database Configuration
+  # MySQL Database Configuration
   datasource:
-    url: jdbc:h2:file:../data/filemanage_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
+    url: jdbc:mysql://localhost:3306/filemanage_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
 
   jpa:
     hibernate:
@@ -19,12 +19,7 @@ spring:
     properties:
       hibernate:
         format_sql: false
-    database-platform: org.hibernate.dialect.H2Dialect
-
-  # H2 Console (生产环境关闭)
-  h2:
-    console:
-      enabled: false
+    database-platform: org.hibernate.dialect.MySQL8Dialect
 
   # Mail Configuration (QQ邮箱SMTP)
   mail:

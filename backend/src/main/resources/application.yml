@@ -5,12 +5,12 @@ spring:
   application:
     name: file-manage-system
 
-  # H2 Database Configuration
+  # MySQL Database Configuration
   datasource:
-    url: jdbc:h2:file:../data/filemanage_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
+    url: jdbc:mysql://localhost:3306/filemanage_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: qwe123
 
   jpa:
     hibernate:
@@ -19,20 +19,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    database-platform: org.hibernate.dialect.H2Dialect
-
-  # H2 Console (开发调试用)
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    database-platform: org.hibernate.dialect.MySQL8Dialect
 
   # Mail Configuration (QQ邮箱SMTP)
   mail:
-    host: smtp.qq.com
+    host: smtp.163.com
     port: 587
-    username: cuixianbai@qq.com
-    password: hgenfobfpritbfhi
+    username: appleserver2026@163.com
+    password: MVwkP6RGaHiizGk3
     protocol: smtp
     default-encoding: UTF-8
     properties:

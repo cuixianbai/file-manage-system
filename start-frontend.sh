@@ -15,9 +15,13 @@ fi
 # 启动前端服务
 echo "启动前端服务..."
 cd "$(dirname "$0")/frontend"
-npm exec -- serve -s dist -l 5173 &
+# 创建logs目录
+mkdir -p logs
+# 启动前端服务并将日志输出到文件
+npm exec -- serve -s dist -l 5173 > logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "前端服务已启动，PID: $FRONTEND_PID"
+echo "日志输出到: logs/frontend.log"
 
 echo ""
 echo "======================================="
